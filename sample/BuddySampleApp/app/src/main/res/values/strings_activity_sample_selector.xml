@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="instructions">Please select a sample activity.</string>
+    <string-array name="sampleList">
+        <item>Submit/Search Checkins</item>
+        <item>File Manipulation</item>
+        <item>Push Notifications</item>
+    </string-array>
+</resources>

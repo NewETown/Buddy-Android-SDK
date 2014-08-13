@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="submit_file">Generate File</string>
+    <string name="file_id_hint">Enter File ID</string>
+    <string name="download_file">Download File</string>
+</resources>

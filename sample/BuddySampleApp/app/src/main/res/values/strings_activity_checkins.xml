@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lat_hint">Enter latitude</string>
+    <string name="lng_hint">Enter longitude</string>
+    <string name="description_hint">Enter description</string>
+    <string name="search_range">Enter search range (meters)</string>
+</resources>
