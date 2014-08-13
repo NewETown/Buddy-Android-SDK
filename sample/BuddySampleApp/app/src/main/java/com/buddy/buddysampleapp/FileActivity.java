@@ -191,11 +191,12 @@ public class FileActivity extends Activity {
                         @Override
                         public void completed(BuddyResult<Picture> resultPicture) {
                             if (resultPicture.getIsSuccess()) {
-                                // Store the file in the gallery, display a toast, and display the caption
+                                // Display a toast, and display the caption
                                 mFileDescription.setText("Caption: " + resultPicture.getResult().caption);
                                 // At this point you could get the image data from resultFile then store or present it on the user's device
                                 Toast toast = Toast.makeText(context, "File download success!", duration);
                                 toast.show();
+                                // This would be a good place to store the image in the gallery or some other local storage!
                             } else {
                                 Toast toast = Toast.makeText(context, "Failed to get file info!", duration);
                                 toast.show();
