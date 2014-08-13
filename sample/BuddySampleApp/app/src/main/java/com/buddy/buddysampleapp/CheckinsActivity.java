@@ -34,9 +34,6 @@ public class CheckinsActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_checkins);
 
-        // Initialize Buddy
-        \ Buddy.init(null, "YOUR_APP_ID", "YOUR_APP_KEY");
-
         // Initialize the submit & search buttons
         Button mSubmitCheckinButton = (Button)findViewById(R.id.btn_submit_checkin);
         mSubmitCheckinButton.setOnClickListener(new View.OnClickListener() {
