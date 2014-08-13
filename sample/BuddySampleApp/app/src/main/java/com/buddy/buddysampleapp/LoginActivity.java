@@ -55,7 +55,7 @@ public class LoginActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        Buddy.init(null, "YOUR_APP_ID", "YOUR_APP_KEY");
+        \ Buddy.init(null, "YOUR_APP_ID", "YOUR_APP_KEY");
 
         // Set up the login form.
         mEmailView = (TextView) findViewById(R.id.email);

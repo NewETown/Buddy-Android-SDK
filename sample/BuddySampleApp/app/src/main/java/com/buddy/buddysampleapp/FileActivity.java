@@ -50,7 +50,7 @@ public class FileActivity extends Activity {
         setContentView(R.layout.activity_file);
 
         // Initialize Buddy
-        Buddy.init(null, "YOUR_APP_ID", "YOUR_APP_KEY");
+        \ Buddy.init(null, "YOUR_APP_ID", "YOUR_APP_KEY");
 
         // Initialize the button UI elements
         Button mUploadFile = (Button)findViewById(R.id.btn_submit_file);
