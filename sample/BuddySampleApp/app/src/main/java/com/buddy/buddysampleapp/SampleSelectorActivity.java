@@ -24,13 +24,13 @@ public class SampleSelectorActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sample_selector);
 
-        TextView greeting = (TextView)findViewById(R.id.greeting);
+        TextView greeting = (TextView)findViewById(R.id.text_greeting);
 
         // Collect the values we stored after login
         Intent i = getIntent();
         greeting.setText("Welcome " + i.getStringExtra("username") + "!");
 
-        ListView listView = (ListView)findViewById(R.id.sampleList);
+        ListView listView = (ListView)findViewById(R.id.list_samples);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {

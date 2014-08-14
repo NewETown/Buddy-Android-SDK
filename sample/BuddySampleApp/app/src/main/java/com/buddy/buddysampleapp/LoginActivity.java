@@ -100,49 +100,9 @@ public class LoginActivity extends Activity {
         String email = mEmailView.getText().toString();
         String password = mPasswordView.getText().toString();
 
-        boolean cancel = false;
-        View focusView = null;
+        showProgress(true);
+        doUserLogin(email, password);
 
-
-        // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
-            mPasswordView.setError(getString(R.string.error_invalid_password));
-            focusView = mPasswordView;
-            cancel = true;
-        }
-
-        // Check for a valid email address.
-        if (TextUtils.isEmpty(email)) {
-            mEmailView.setError(getString(R.string.error_field_required));
-            focusView = mEmailView;
-            cancel = true;
-        } else if (!isEmailValid(email)) {
-            mEmailView.setError(getString(R.string.error_invalid_email));
-            focusView = mEmailView;
-            cancel = true;
-        }
-
-        if (cancel) {
-            // There was an error; don't attempt login and focus the first
-            // form field with an error.
-            focusView.requestFocus();
-        } else {
-            // Show a progress spinner, and kick off a background task to
-            // perform the user login attempt.
-            showProgress(true);
-            //mAuthTask = new UserLoginTask(email, password);
-            //mAuthTask.execute((Void) null);
-            doUserLogin(email, password);
-        }
-    }
-    private boolean isEmailValid(String email) {
-        //TODO: Replace this with your own logic
-        return email.contains("@");
-    }
-
-    private boolean isPasswordValid(String password) {
-        //TODO: Replace this with your own logic
-        return password.length() > 4;
     }
 
     /**
@@ -185,14 +145,14 @@ public class LoginActivity extends Activity {
         // doLoginUser follows a single-button login/create pattern
         // This is not a great pattern for production apps but works well
 
-        final String _u = username;
-        final String _p = password;
+        final String user = username;
+        final String pw = password;
         // Create an intent to switch activities
         final Intent i = new Intent(getApplicationContext(), SampleSelectorActivity.class);
-        i.putExtra("username", _u);
+        i.putExtra("username", user);
 
         // See the Buddy createUser documentation at http://www.buddyplatform.com/docs/Create%20User
-        Buddy.createUser(_u, _p, null, null, null, null, null, null, new BuddyCallback<User>(User.class) {
+        Buddy.createUser(user, pw, null, null, null, null, null, null, new BuddyCallback<User>(User.class) {
 
             @Override
             public void completed(BuddyResult<User> result) {
@@ -204,10 +164,9 @@ public class LoginActivity extends Activity {
                     finish();
                     startActivity(i);
 
-                    // Progress to the next view
-                } else if (result.getError().equals("ItemAlreadyExists")) {
+                } else if (result.getErrorCode() == 770) {
                     // Then the user is already created, log them in
-                    Buddy.loginUser(_u, _p, new BuddyCallback<User>(User.class) {
+                    Buddy.loginUser(user, pw, new BuddyCallback<User>(User.class) {
 
                         @Override
                         public void completed(BuddyResult<User> result) {

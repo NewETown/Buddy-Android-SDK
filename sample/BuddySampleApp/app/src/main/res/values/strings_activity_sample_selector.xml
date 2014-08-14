@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="instructions">Please select a sample activity.</string>
-    <string-array name="sampleList">
+    <string-array name="code_samples">
         <item>Submit/Search Checkins</item>
         <item>File Manipulation</item>
     </string-array>

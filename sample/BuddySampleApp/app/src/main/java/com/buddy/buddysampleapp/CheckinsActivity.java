@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Adapter;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -29,22 +30,33 @@ import java.util.Map;
 
 public class CheckinsActivity extends Activity {
 
+    // Prep the ListView
+    ListView mCheckinList;
+    List<String> mLi;
+    ArrayAdapter mAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_checkins);
 
+        mLi = new ArrayList<String>();
+
+        mCheckinList = (ListView)findViewById(R.id.list_checkins);
+        mAdapter = new ArrayAdapter<String>(getBaseContext(), R.layout.list, mLi);
+        mCheckinList.setAdapter(mAdapter);
+
         // Initialize the submit & search buttons
-        Button mSubmitCheckinButton = (Button)findViewById(R.id.btn_submit_checkin);
-        mSubmitCheckinButton.setOnClickListener(new View.OnClickListener() {
+        Button btnSubmitCheckin = (Button)findViewById(R.id.btn_submit_checkin);
+        btnSubmitCheckin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 submitCheckin();
             }
         });
 
-        Button mSearchCheckinButton = (Button)findViewById(R.id.btn_search_checkins);
-        mSearchCheckinButton.setOnClickListener(new View.OnClickListener() {
+        Button btnSearchCheckins = (Button)findViewById(R.id.btn_search_checkins);
+        btnSearchCheckins.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 searchCheckins();
@@ -73,48 +85,47 @@ public class CheckinsActivity extends Activity {
     }
 
     public void searchCheckins() {
-        EditText editText_lat = (EditText)findViewById(R.id.search_lat);
-        EditText editText_lng = (EditText)findViewById(R.id.search_lng);
-        EditText editText_range = (EditText)findViewById(R.id.search_range);
+        EditText editText_lat = (EditText)findViewById(R.id.edit_search_lat);
+        EditText editText_lng = (EditText)findViewById(R.id.edit_search_lng);
+        EditText editText_range = (EditText)findViewById(R.id.edit_search_range);
 
         // Get the values we need from the user
-        String _query = editText_lat.getText().toString() + ", " + editText_lng.getText().toString() + ", " + editText_range.getText().toString();
-
-        // Prep the ListView
-        final ListView list = (ListView)findViewById(R.id.result_list);
+        String query = editText_lat.getText().toString() + ", " + editText_lng.getText().toString() + ", " + editText_range.getText().toString();
 
         // Set up the toasts
         final Context context = getApplicationContext();
         final int duration = Toast.LENGTH_SHORT;
-        Toast toast = Toast.makeText(context, "Searching: " + _query, duration);
+        Toast toast = Toast.makeText(context, "Searching: " + query, duration);
         toast.show();
 
         // Submit the values (note that this doesn't check for bad input)
         Map<String,Object> parameters = new HashMap<String,Object>();
-        parameters.put("locationRange", _query);
+        parameters.put("locationRange", query);
         Buddy.<JsonObject>get("/checkins", parameters, new BuddyCallback<JsonObject>(JsonObject.class) {
             @Override
             public void completed(BuddyResult<JsonObject> result) {
+                // Clear the checkin list
+                mLi.clear();
+
                 if (result.getIsSuccess()) {
                     JsonObject obj = result.getResult();
                     JsonArray resultArray = obj.getAsJsonArray("pageResults");
                     // Initialize a list to supply to the ListView
-                    List<String> li = new ArrayList<String>();
+
                     // Add items to the list
                     if (resultArray.size() == 0) {
-                        li.add("No results");
+                        mLi.add("No results");
+                        mAdapter.notifyDataSetChanged();
                     } else {
                         for (int i = 0; i < resultArray.size(); i++) {
-                            JsonObject _o = (JsonObject)resultArray.get(i);
-                            li.add(_o.get("id") + ": " + _o.get("location"));
+                            JsonObject checkin = (JsonObject)resultArray.get(i);
+                            mLi.add(checkin.get("id") + ": " + checkin.get("location"));
                         }
+                        mAdapter.notifyDataSetChanged();
                     }
-                    // Send it all to the Adapter
-                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(getBaseContext(), R.layout.list, li);
-                    list.setAdapter(adapter);
                 } else {
                     // Toast on error
-                    Toast toast = Toast.makeText(context, String.format("Something went wrong: %i", result.getErrorCode()), duration);
+                    Toast toast = Toast.makeText(context, String.format("Error: %i", result.getErrorCode()), duration);
                     toast.show();
                 }
             }
@@ -122,13 +133,13 @@ public class CheckinsActivity extends Activity {
     }
 
     public void submitCheckin() {
-        EditText editText_lat = (EditText)findViewById(R.id.enter_lat);
-        EditText editText_lng = (EditText)findViewById(R.id.enter_lng);
-        EditText editText_description = (EditText)findViewById(R.id.enter_description);
+        EditText editText_lat = (EditText)findViewById(R.id.edit_enter_lat);
+        EditText editText_lng = (EditText)findViewById(R.id.edit_enter_lng);
+        EditText editText_description = (EditText)findViewById(R.id.edit_enter_description);
 
         // Get the values we need from the user
-        double _lat = Double.parseDouble(editText_lat.getText().toString());
-        double _lng = Double.parseDouble(editText_lng.getText().toString());
+        double lat = Double.parseDouble(editText_lat.getText().toString());
+        double lng = Double.parseDouble(editText_lng.getText().toString());
         String description = editText_description.getText().toString();
 
         // Get a toast ready to show the result
@@ -137,8 +148,8 @@ public class CheckinsActivity extends Activity {
 
         // Submit the values (note that this doesn't check for bad input)
         Location location = new Location("");
-        location.setLatitude(_lat);
-        location.setLongitude(_lng);
+        location.setLatitude(lat);
+        location.setLongitude(lng);
         Map<String,Object> parameters = new HashMap<String,Object>();
         parameters.put("description", description);
         parameters.put("location", String.format("%f,%f", location.getLatitude(), location.getLongitude()));
@@ -156,10 +167,10 @@ public class CheckinsActivity extends Activity {
                     JsonObject obj = result.getResult();
                     // Toast the ID of the checkin as confirmation
                     String id = obj.get("id").getAsString();
-                    Toast toast = Toast.makeText(context, "Success! " + id, duration);
+                    Toast toast = Toast.makeText(context, "Checkin complete!", duration);
                     toast.show();
                 } else {
-                    Toast toast = Toast.makeText(context, "Something went wrong", duration);
+                    Toast toast = Toast.makeText(context, String.format("Error: %i", result.getErrorCode()), duration);
                     toast.show();
                 }
             }

@@ -16,19 +16,19 @@
         android:layout_height="wrap_content" />
 
     <EditText
-        android:id="@+id/enter_lat"
+        android:id="@+id/edit_enter_lat"
         android:hint="@string/lat_hint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
     <EditText
-        android:id="@+id/enter_lng"
+        android:id="@+id/edit_enter_lng"
         android:hint="@string/lng_hint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
     <EditText
-        android:id="@+id/enter_description"
+        android:id="@+id/edit_enter_description"
         android:hint="@string/description_hint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
@@ -47,19 +47,19 @@
         android:layout_height="wrap_content"
         android:gravity="center"/>
     <EditText
-        android:id="@+id/search_lat"
+        android:id="@+id/edit_search_lat"
         android:hint="@string/lat_hint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
     <EditText
-        android:id="@+id/search_lng"
+        android:id="@+id/edit_search_lng"
         android:hint="@string/lng_hint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
     <EditText
-        android:id="@+id/search_range"
+        android:id="@+id/edit_search_range"
         android:hint="@string/search_range"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
@@ -72,7 +72,7 @@
         android:layout_height="wrap_content" />
 
     <ListView
-        android:id="@+id/result_list"
+        android:id="@+id/list_checkins"
         android:layout_width="match_parent"
         android:layout_height="fill_parent">
 

@@ -14,8 +14,8 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/greeting"
-            android:text="Temp"
+            android:id="@+id/text_greeting"
+            android:text=""
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center" />
@@ -27,8 +27,8 @@
             android:gravity="center" />
 
         <ListView
-            android:id="@+id/sampleList"
-            android:entries="@array/sampleList"
+            android:id="@+id/list_samples"
+            android:entries="@array/code_samples"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"></ListView>
 
