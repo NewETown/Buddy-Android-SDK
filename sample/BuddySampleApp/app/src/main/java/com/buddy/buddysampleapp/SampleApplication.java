@@ -10,8 +10,8 @@ import com.buddy.sdk.UserAuthenticationRequiredCallback;
 
 public class SampleApplication extends Application {
 
-    private static final String AppId = "YOUR_APP_ID";
-    private static final String AppKey = "YOUR_APP_KEY";
+    private static final String AppId = "bbbbbc.DdhbvfLhKgDn";
+    private static final String AppKey = "5789A351-1144-49E6-8721-4C0DFCC226F2";
 
 
     public BuddyClient buddyClient;
@@ -28,7 +28,7 @@ public class SampleApplication extends Application {
         super.onCreate();
 
         // Don't forget to add your own AppId and AppKey!
-        \ buddyClient = Buddy.init(this, AppId, AppKey);
+        buddyClient = Buddy.init(this, AppId, AppKey);
 
         buddyClient.setUserAuthenticationRequiredCallback(new UserAuthenticationRequiredCallback() {
             @Override
