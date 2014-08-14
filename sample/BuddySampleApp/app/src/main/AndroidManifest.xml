@@ -3,24 +3,25 @@
     package="com.buddy.buddysampleapp" >
 
     <application
+        android:name=".SampleApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name"
+        android:label="Buddy Sample App"
         android:theme="@style/AppTheme" >
 
         <activity
             android:name=".LoginActivity"
             android:label="@string/app_name"
             android:windowSoftInputMode="adjustResize|stateVisible" >
+        </activity>
+        <activity
+            android:name=".SampleSelectorActivity"
+            android:label="Buddy Sample App" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <activity
-            android:name=".SampleSelectorActivity"
-            android:label="@string/title_activity_sample_selector" >
         </activity>
         <activity
             android:name=".CheckinsActivity"
@@ -32,6 +33,9 @@
         </activity>
     </application>
 
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.READ_PROFILE" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.INTERNET" />
 
 </manifest>

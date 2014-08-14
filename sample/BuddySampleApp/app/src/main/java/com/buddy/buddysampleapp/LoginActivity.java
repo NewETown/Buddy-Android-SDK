@@ -4,14 +4,15 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.LoaderManager.LoaderCallbacks;
+import android.app.LoaderManager;
 import android.content.ContentResolver;
 import android.content.CursorLoader;
 import android.content.Intent;
+
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
-
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -29,36 +30,43 @@ import android.widget.TextView;
 
 import com.buddy.sdk.Buddy;
 import com.buddy.sdk.BuddyCallback;
+import com.buddy.sdk.BuddyClient;
 import com.buddy.sdk.BuddyResult;
 import com.buddy.sdk.models.User;
 
-import junit.framework.Assert;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 
 /**
  * A login screen that offers login via email/password.
 
  */
-public class LoginActivity extends Activity {
+public class LoginActivity extends Activity implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    /**
+     * Keep track of the login task to ensure we can cancel it if requested.
+     */
+    private UserLoginTask mAuthTask = null;
 
     // UI references.
-    private TextView mEmailView;
+    private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+
+    BuddyClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        \ Buddy.init(null, "YOUR_APP_ID", "YOUR_APP_KEY");
-
         // Set up the login form.
-        mEmailView = (TextView) findViewById(R.id.email);
+        mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
+        populateAutoComplete();
 
         mPasswordView = (EditText) findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -83,7 +91,26 @@ public class LoginActivity extends Activity {
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
 
+
+
     }
+
+    protected void onStop() {
+        SampleApplication mApplication = (SampleApplication)getApplicationContext();
+        mApplication.loginVisible = false;
+        super.onStop();
+    }
+
+    private void populateAutoComplete() {
+        if (Build.VERSION.SDK_INT >= 14) {
+            // Use ContactsContract.Profile (API 14+)
+            getLoaderManager().initLoader(0, null, this);
+        } else if (Build.VERSION.SDK_INT >= 8) {
+            // Use AccountManager (API 8+)
+            new SetupEmailAutoCompleteTask().execute(null, null);
+        }
+    }
+
 
     /**
      * Attempts to sign in or register the account specified by the login form.
@@ -91,6 +118,9 @@ public class LoginActivity extends Activity {
      * errors are presented and no actual login attempt is made.
      */
     public void attemptLogin() {
+        if (mAuthTask != null) {
+            return;
+        }
 
         // Reset errors.
         mEmailView.setError(null);
@@ -100,9 +130,49 @@ public class LoginActivity extends Activity {
         String email = mEmailView.getText().toString();
         String password = mPasswordView.getText().toString();
 
-        showProgress(true);
-        doUserLogin(email, password);
+        boolean cancel = false;
+        View focusView = null;
 
+
+        // Check for a valid password, if the user entered one.
+        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
+            mPasswordView.setError(getString(R.string.error_invalid_password));
+            focusView = mPasswordView;
+            cancel = true;
+        }
+
+        // Check for a valid email address.
+        if (TextUtils.isEmpty(email)) {
+            mEmailView.setError(getString(R.string.error_field_required));
+            focusView = mEmailView;
+            cancel = true;
+        } else if (!isEmailValid(email)) {
+            mEmailView.setError(getString(R.string.error_invalid_email));
+            focusView = mEmailView;
+            cancel = true;
+        }
+
+        if (cancel) {
+            // There was an error; don't attempt login and focus the first
+            // form field with an error.
+            focusView.requestFocus();
+        } else {
+            // Show a progress spinner, and kick off a background task to
+            // perform the user login attempt.
+            showProgress(true);
+            SampleApplication mApplication = (SampleApplication)getApplicationContext();
+            mAuthTask = new UserLoginTask(mApplication.buddyClient, email, password);
+            mAuthTask.execute((Void) null);
+        }
+    }
+    private boolean isEmailValid(String email) {
+        //TODO: Replace this with your own logic
+        return email.contains("@");
+    }
+
+    private boolean isPasswordValid(String password) {
+        //TODO: Replace this with your own logic
+        return password.length() > 4;
     }
 
     /**
@@ -141,62 +211,229 @@ public class LoginActivity extends Activity {
         }
     }
 
-    public void doUserLogin(String username, String password) {
-        // doLoginUser follows a single-button login/create pattern
-        // This is not a great pattern for production apps but works well
+    @Override
+    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+        return new CursorLoader(this,
+                // Retrieve data rows for the device user's 'profile' contact.
+                Uri.withAppendedPath(ContactsContract.Profile.CONTENT_URI,
+                        ContactsContract.Contacts.Data.CONTENT_DIRECTORY), ProfileQuery.PROJECTION,
 
-        final String user = username;
-        final String pw = password;
-        // Create an intent to switch activities
-        final Intent i = new Intent(getApplicationContext(), SampleSelectorActivity.class);
-        i.putExtra("username", user);
+                // Select only email addresses.
+                ContactsContract.Contacts.Data.MIMETYPE +
+                        " = ?", new String[]{ContactsContract.CommonDataKinds.Email
+                .CONTENT_ITEM_TYPE},
 
-        // See the Buddy createUser documentation at http://www.buddyplatform.com/docs/Create%20User
-        Buddy.createUser(user, pw, null, null, null, null, null, null, new BuddyCallback<User>(User.class) {
-
-            @Override
-            public void completed(BuddyResult<User> result) {
-
-                if(result.getIsSuccess()) {
-                    // We have created a user and have their access token to work with
-
-                    showProgress(false);
-                    finish();
-                    startActivity(i);
-
-                } else if (result.getErrorCode() == 770) {
-                    // Then the user is already created, log them in
-                    Buddy.loginUser(user, pw, new BuddyCallback<User>(User.class) {
-
-                        @Override
-                        public void completed(BuddyResult<User> result) {
-
-                            showProgress(false);
-
-                            if(result.getIsSuccess()) {
-                                // Things went well! We have a user token and can make calls
-                                // Progress to the next view
-                                finish();
-
-                                startActivity(i);
-                            } else if(result.getError().equals("AuthBadUsernameOrPassword")) {
-                                // Return the user to the login screen
-                            } else {
-                                // Something else went wrong, this block should not happen
-                                Log.w("BAD_BLOCK", "Something went wrong in loginUser(), throw a breakpoint in and look at the HTTP response.");
-                                finish();
-                            }
-                        }
-                    });
-                } else {
-                    // Something else went wrong, this block should not happen
-                    Log.w("BAD_BLOCK", "Something went wrong in createUser(), throw a breakpoint in and look at the HTTP response.");
-                    finish();
-                }
-
-            }
-        });
+                // Show primary email addresses first. Note that there won't be
+                // a primary email address if the user hasn't specified one.
+                ContactsContract.Contacts.Data.IS_PRIMARY + " DESC");
     }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        List<String> emails = new ArrayList<String>();
+        cursor.moveToFirst();
+        while (!cursor.isAfterLast()) {
+            emails.add(cursor.getString(ProfileQuery.ADDRESS));
+            cursor.moveToNext();
+        }
+
+        addEmailsToAutoComplete(emails);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> cursorLoader) {
+
+    }
+
+    private interface ProfileQuery {
+        String[] PROJECTION = {
+                ContactsContract.CommonDataKinds.Email.ADDRESS,
+                ContactsContract.CommonDataKinds.Email.IS_PRIMARY,
+        };
+
+        int ADDRESS = 0;
+        int IS_PRIMARY = 1;
+    }
+
+    /**
+     * Use an AsyncTask to fetch the user's email addresses on a background thread, and update
+     * the email text field with results on the main UI thread.
+     */
+    class SetupEmailAutoCompleteTask extends AsyncTask<Void, Void, List<String>> {
+
+        @Override
+        protected List<String> doInBackground(Void... voids) {
+            ArrayList<String> emailAddressCollection = new ArrayList<String>();
+
+            // Get all emails from the user's contacts and copy them to a list.
+            ContentResolver cr = getContentResolver();
+            Cursor emailCur = cr.query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null,
+                    null, null, null);
+            while (emailCur.moveToNext()) {
+                String email = emailCur.getString(emailCur.getColumnIndex(ContactsContract
+                        .CommonDataKinds.Email.DATA));
+                emailAddressCollection.add(email);
+            }
+            emailCur.close();
+
+            return emailAddressCollection;
+        }
+
+        @Override
+        protected void onPostExecute(List<String> emailAddressCollection) {
+            addEmailsToAutoComplete(emailAddressCollection);
+        }
+    }
+
+    private void addEmailsToAutoComplete(List<String> emailAddressCollection) {
+        //Create adapter to tell the AutoCompleteTextView what to show in its dropdown list.
+        ArrayAdapter<String> adapter =
+                new ArrayAdapter<String>(LoginActivity.this,
+                        android.R.layout.simple_dropdown_item_1line, emailAddressCollection);
+
+        mEmailView.setAdapter(adapter);
+    }
+
+    /**
+     * Represents an asynchronous login/registration task used to authenticate
+     * the user.
+     */
+    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
+
+        private final String mEmail;
+        private final String mPassword;
+        private final BuddyClient client;
+
+        UserLoginTask(BuddyClient client, String email, String password) {
+            mEmail = email;
+            mPassword = password;
+            this.client = client;
+        }
+
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+
+
+            // first try login.
+            //
+
+            Future<BuddyResult<User>> promise = client.loginUser(mEmail, mPassword, null);
+
+            BuddyResult<User> user = null;
+            try {
+                user = promise.get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+
+
+            if (user.getIsSuccess()) {
+
+                return true;
+            }
+
+            // do sign in
+            //
+
+            promise = Buddy.createUser(mEmail, mPassword, null, null, null, null, null, null, null);
+
+
+            try {
+                user = promise.get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+
+
+            if (user.getIsSuccess()) {
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            mAuthTask = null;
+            showProgress(false);
+
+            if (success) {
+                finish();
+            } else {
+                mPasswordView.setError(getString(R.string.error_incorrect_password));
+                mPasswordView.requestFocus();
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            mAuthTask = null;
+            showProgress(false);
+        }
+    }
+
+//    public void doUserLogin(String username, String password) {
+//        // doLoginUser follows a single-button login/create pattern
+//        // This is not a great pattern for production apps but works well
+//
+//        final String user = username;
+//        final String pw = password;
+//        // Create an intent to switch activities
+//        final Intent i = new Intent(getApplicationContext(), SampleSelectorActivity.class);
+//        i.putExtra("username", user);
+//
+//        // See the Buddy createUser documentation at http://www.buddyplatform.com/docs/Create%20User
+//        Buddy.createUser(user, pw, null, null, null, null, null, null, new BuddyCallback<User>(User.class) {
+//
+//            @Override
+//            public void completed(BuddyResult<User> result) {
+//
+//                if(result.getIsSuccess()) {
+//                    // We have created a user and have their access token to work with
+//
+//                    showProgress(false);
+//                    finish();
+//                    startActivity(i);
+//
+//                } else if (result.getErrorCode() == 770) {
+//                    // Then the user is already created, log them in
+//                    Buddy.loginUser(user, pw, new BuddyCallback<User>(User.class) {
+//
+//                        @Override
+//                        public void completed(BuddyResult<User> result) {
+//
+//                            showProgress(false);
+//
+//                            if(result.getIsSuccess()) {
+//                                // Things went well! We have a user token and can make calls
+//                                // Progress to the next view
+//                                finish();
+//
+//                                startActivity(i);
+//                            } else if(result.getError().equals("AuthBadUsernameOrPassword")) {
+//                                // Return the user to the login screen
+//                            } else {
+//                                // Something else went wrong, this block should not happen
+//                                Log.w("BAD_BLOCK", "Something went wrong in loginUser(), throw a breakpoint in and look at the HTTP response.");
+//                                finish();
+//                            }
+//                        }
+//                    });
+//                } else {
+//                    // Something else went wrong, this block should not happen
+//                    Log.w("BAD_BLOCK", "Something went wrong in createUser(), throw a breakpoint in and look at the HTTP response.");
+//                    finish();
+//                }
+//
+//            }
+//        });
+//    }
 
 }
 
