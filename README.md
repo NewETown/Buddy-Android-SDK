@@ -39,9 +39,9 @@ In your build.gradle file under 'src', add a line for the Buddy Android SDK depe
 Go to File > Project Structure and select the Project tab. Change the `Default Library Repository` from `jcenter()` to `mavenCentral`.
 
 This will install the latest release of the Buddy Android SDK.
-**Note:** If you wish to limit yourself to a narrower set of releases, you can do so like this (e.g. the latest release in the 0.1 series):
+**Note:** If you wish to limit yourself to a narrower set of releases, you can do so like this (e.g. the latest release in the 3.0.0 series):
 
-    Compile 'com.buddy:androidsdk:0.1.+'
+    Compile 'com.buddy:androidsdk:3.0.0+'
 
 At this point you will be able to import from com.buddy.sdk to access the Buddy Classes
 (e.g. import com.buddy.sdk.BuddyClient)
@@ -176,41 +176,6 @@ This sample searches for the checkin we created in the POST example. See [Search
 #### PUT/PATCH/DELETE
 
 Each remaining REST verb is available through the Buddy SDK using the same pattern as the POST and GET examples.
-
-### Working With Files
-
-Buddy offers support for binary files. The Android SDK works with files through our REST interface similarly to other API calls.
-
-#### Upload A File
-
-The Buddy Android SDK handles all necessary file management for you. The key class is `com.buddy.sdk.BuddyFile`, which is a wrapper around an Android `File` or `InputStream`, along with a MIME content type. Here we demonstrate uploading a picture. All binary files use the same pattern with a different path and different parameters. To upload a picture POST to
-
-    BuddyFile buddyFile = new BuddyFile(new File(...), "image/jpg");
-    Map<String,Object> parameters = new HashMap<String,Object>();
-    parameters.put("caption", "From Android");
-    parameters.put("data", buddyFile);
-    Buddy.<Picture>post("/pictures", parameters, new BuddyCallback<Picture>(Picture.class){
-        @Override
-        public void completed(BuddyResult<Picture> result) {
-            if (result.getIsSuccess()) {
-                Log.w(APP_LOG, "It worked!");
-            }
-        }
-    });
-
-#### Download A File
-
-To download a file send a GET request with BPFile as the operation type. This sample downloads the picture we uploaded in the "Upload File" example:
-
-    Buddy.get(String.format("/pictures/%s/file", fileId), null, new BuddyCallback<BuddyFile>(BuddyFile.class) {
-        @Override
-        public void completed(BuddyResult<BuddyFile> file) {
-            // Do something with your picture!
-            Log.w(APP_LOG, file.getResult().getContentType());
-        }
-    });
-
-**Note:** Responses for files deviate from the standard Buddy response templates. See the [Buddy Platform documentation](https://buddyplatform.com/docs) for more information.
   
 ### Creating Response Objects
 
@@ -250,6 +215,41 @@ The corresponding Java object for the unique field under `result` is:
 We can then call:
 
      Buddy.<BuddyResult<Checkin>>get(String.format("/checkins/%f", checkinId), null, new BuddyCallback<Checkin>(Checkin.class){...});
+
+### Working With Files
+
+Buddy offers support for binary files. The Android SDK works with files through our REST interface similarly to other API calls.
+
+#### Upload A File
+
+The Buddy Android SDK handles all necessary file management for you. The key class is `com.buddy.sdk.BuddyFile`, which is a wrapper around an Android `File` or `InputStream`, along with a MIME content type. Here we demonstrate uploading a picture. All binary files use the same pattern with a different path and different parameters. To upload a picture POST to
+
+    BuddyFile buddyFile = new BuddyFile(new File(...), "image/jpg");
+    Map<String,Object> parameters = new HashMap<String,Object>();
+    parameters.put("caption", "From Android");
+    parameters.put("data", buddyFile);
+    Buddy.<Picture>post("/pictures", parameters, new BuddyCallback<Picture>(Picture.class){
+        @Override
+        public void completed(BuddyResult<Picture> result) {
+            if (result.getIsSuccess()) {
+                Log.w(APP_LOG, "It worked!");
+            }
+        }
+    });
+
+#### Download A File
+
+To download a file send a GET request with BPFile as the operation type. This sample downloads the picture we uploaded in the "Upload File" example:
+
+    Buddy.get(String.format("/pictures/%s/file", fileId), null, new BuddyCallback<BuddyFile>(BuddyFile.class) {
+        @Override
+        public void completed(BuddyResult<BuddyFile> file) {
+            // Do something with your picture!
+            Log.w(APP_LOG, file.getResult().getContentType());
+        }
+    });
+
+**Note:** Responses for files deviate from the standard Buddy response templates. See the [Buddy Platform documentation](https://buddyplatform.com/docs) for more information.
 
 ## Contributing Back: Pull Requests
 
