@@ -54,7 +54,8 @@ To build the SDK you need to:
 
 1.  Install the [Android SDK Tools](http://developer.android.com/sdk/index.html)
 2.  Set the ANDROID_HOME environment variable to the Android SDK install directory
-3.  Install Android SDK build tools version 19.1.0, and SDK Platform for API 10 (Android 2.3.3) 
+3.  Open the Android SDK Manager and make sure you have installed Android SDK Build-tools 19.1 and Android 2.3.3 (API 10)
+4.  Windows only - Install the [Java SE Development Kit](http://www.oracle.com/technetwork/java/javase/downloads/index-jsp-138363.html#javasejdk), and set the JAVA_HOME environment variable to the JDK install directory
 
 #### Build and Install
 
