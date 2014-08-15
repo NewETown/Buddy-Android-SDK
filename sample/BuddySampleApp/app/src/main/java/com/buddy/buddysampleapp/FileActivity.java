@@ -1,21 +1,10 @@
 package com.buddy.buddysampleapp;
 
 import android.app.Activity;
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.BitmapShader;
-import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.Paint;
-import android.graphics.PixelFormat;
-import android.graphics.RectF;
-import android.graphics.Shader;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,7 +17,9 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.buddy.buddysampleapp.R;
+import com.buddy.buddysampleapp.util.AppImage;
+import com.buddy.buddysampleapp.util.AppImageAdapter;
+
 import com.buddy.sdk.Buddy;
 import com.buddy.sdk.BuddyCallback;
 import com.buddy.sdk.BuddyFile;
@@ -39,28 +30,25 @@ import com.google.gson.JsonObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Date;
-import java.text.SimpleDateFormat;
 
 public class FileActivity extends Activity {
 
-    List<String> mFileIdList;
+    ArrayList<AppImage> mFileIdList;
     ListView mFileList;
     TextView mNoPicturesText;
-    ArrayAdapter<String> mAdapter;
+    AppImageAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_file);
 
-        mFileIdList = new ArrayList<String>();
+        mFileIdList = new ArrayList<AppImage>();
 
         mNoPicturesText = (TextView)findViewById(R.id.text_no_pictures);
 
@@ -74,12 +62,12 @@ public class FileActivity extends Activity {
         });
 
         mFileList = (ListView)findViewById(R.id.list_available_files);
-        mAdapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.list, mFileIdList);
+        mAdapter = new AppImageAdapter(getApplicationContext(), R.layout.list, mFileIdList);
         mFileList.setAdapter(mAdapter);
         mFileList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                String fileId = ((TextView)view).getText().toString();
+                String fileId = mFileIdList.get(i).getId();
                 downloadFile(fileId);
             }
         });
@@ -95,7 +83,6 @@ public class FileActivity extends Activity {
         // Populate the file list when the activity starts up
         getFileList();
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -121,15 +108,10 @@ public class FileActivity extends Activity {
         // For this example we're going to draw an image ourselves
         // Typical users will want to upload pictures from their phone storage
 
-        // generate a PNG for upload...
-        Bitmap bitmap = Bitmap.createBitmap(30, 30, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        MyRoundCornerDrawable drawable = new MyRoundCornerDrawable(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-
+        // Grab the Buddy logo from resources
+        Bitmap logo = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.logo);
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        logo.compress(Bitmap.CompressFormat.PNG, 100, stream);
         byte[] bytes = stream.toByteArray();
         InputStream is = new ByteArrayInputStream(bytes);
 
@@ -152,7 +134,8 @@ public class FileActivity extends Activity {
                     fileDescription.setText("");
                     // Add any new files to the list without querying again
                     Log.w("PICTURE_ID", result.getResult().id);
-                    mFileIdList.add(result.getResult().id.replace("\"",""));
+                    mFileIdList.add(new AppImage(result.getResult().id.replace("\"",""),
+                                                 result.getResult().caption));
                     mAdapter.notifyDataSetChanged();
                 } else {
                     Toast toast = Toast.makeText(context, "Error: " + result.getError(), duration);
@@ -160,44 +143,6 @@ public class FileActivity extends Activity {
                 }
             }
         });
-    }
-
-    private class MyRoundCornerDrawable extends Drawable {
-
-        private Paint paint;
-
-        public MyRoundCornerDrawable(Bitmap bitmap) {
-            BitmapShader shader;
-            shader = new BitmapShader(bitmap, Shader.TileMode.CLAMP,
-                    Shader.TileMode.CLAMP);
-            paint = new Paint();
-            paint.setAntiAlias(true);
-            paint.setShader(shader);
-        }
-
-        @Override
-        public void draw(Canvas canvas) {
-            int height = getBounds().height();
-            int width = getBounds().width();
-            RectF rect = new RectF(0.0f, 0.0f, width, height);
-            canvas.drawRoundRect(rect, 30, 30, paint);
-        }
-
-        @Override
-        public void setAlpha(int alpha) {
-            paint.setAlpha(alpha);
-        }
-
-        @Override
-        public void setColorFilter(ColorFilter cf) {
-            paint.setColorFilter(cf);
-        }
-
-        @Override
-        public int getOpacity() {
-            return PixelFormat.TRANSLUCENT;
-        }
-
     }
 
     public void downloadFile(String fileId) {
@@ -265,7 +210,9 @@ public class FileActivity extends Activity {
                     } else {
                         for (int i = 0; i < resultArray.size(); i++) {
                             JsonObject picture = (JsonObject)resultArray.get(i);
-                            mFileIdList.add(picture.get("id").toString().replace("\"",""));
+                            mFileIdList.add(new AppImage(picture.get("id").toString().replace("\"", ""),
+                                                         picture.get("caption").getAsString())
+                                                        );
                         }
                         mNoPicturesText.setVisibility(View.GONE);
                         mFileList.setVisibility(View.VISIBLE);
