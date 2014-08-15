@@ -135,7 +135,7 @@ public class LoginActivity extends Activity implements LoaderManager.LoaderCallb
 
 
         // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
+        if (!TextUtils.isEmpty(password)) {
             mPasswordView.setError(getString(R.string.error_invalid_password));
             focusView = mPasswordView;
             cancel = true;
@@ -168,11 +168,6 @@ public class LoginActivity extends Activity implements LoaderManager.LoaderCallb
     private boolean isEmailValid(String email) {
         //TODO: Replace this with your own logic
         return email.contains("@");
-    }
-
-    private boolean isPasswordValid(String password) {
-        //TODO: Replace this with your own logic
-        return password.length() > 4;
     }
 
     /**
@@ -377,63 +372,6 @@ public class LoginActivity extends Activity implements LoaderManager.LoaderCallb
             showProgress(false);
         }
     }
-
-//    public void doUserLogin(String username, String password) {
-//        // doLoginUser follows a single-button login/create pattern
-//        // This is not a great pattern for production apps but works well
-//
-//        final String user = username;
-//        final String pw = password;
-//        // Create an intent to switch activities
-//        final Intent i = new Intent(getApplicationContext(), SampleSelectorActivity.class);
-//        i.putExtra("username", user);
-//
-//        // See the Buddy createUser documentation at http://www.buddyplatform.com/docs/Create%20User
-//        Buddy.createUser(user, pw, null, null, null, null, null, null, new BuddyCallback<User>(User.class) {
-//
-//            @Override
-//            public void completed(BuddyResult<User> result) {
-//
-//                if(result.getIsSuccess()) {
-//                    // We have created a user and have their access token to work with
-//
-//                    showProgress(false);
-//                    finish();
-//                    startActivity(i);
-//
-//                } else if (result.getErrorCode() == 770) {
-//                    // Then the user is already created, log them in
-//                    Buddy.loginUser(user, pw, new BuddyCallback<User>(User.class) {
-//
-//                        @Override
-//                        public void completed(BuddyResult<User> result) {
-//
-//                            showProgress(false);
-//
-//                            if(result.getIsSuccess()) {
-//                                // Things went well! We have a user token and can make calls
-//                                // Progress to the next view
-//                                finish();
-//
-//                                startActivity(i);
-//                            } else if(result.getError().equals("AuthBadUsernameOrPassword")) {
-//                                // Return the user to the login screen
-//                            } else {
-//                                // Something else went wrong, this block should not happen
-//                                Log.w("BAD_BLOCK", "Something went wrong in loginUser(), throw a breakpoint in and look at the HTTP response.");
-//                                finish();
-//                            }
-//                        }
-//                    });
-//                } else {
-//                    // Something else went wrong, this block should not happen
-//                    Log.w("BAD_BLOCK", "Something went wrong in createUser(), throw a breakpoint in and look at the HTTP response.");
-//                    finish();
-//                }
-//
-//            }
-//        });
-//    }
 
 }
 
