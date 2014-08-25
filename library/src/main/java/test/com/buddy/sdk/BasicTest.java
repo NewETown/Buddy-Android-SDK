@@ -23,7 +23,11 @@ import com.buddy.sdk.models.Picture;
 import com.buddy.sdk.models.User;
 import com.buddy.sdk.BuddyFile;
 import com.buddy.sdk.BuddyResult;
+import com.google.gson.JsonObject;
+
 import junit.framework.Assert;
+
+import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -38,14 +42,20 @@ import java.util.concurrent.Future;
 public class BasicTest extends InstrumentationTestCase {
 
     private static final String TargetUrl = null;
-    private static final String AppId = "your app id";
-    private static final String AppKey = "your app key";
+    private static final String AppId = "your_appid";
+    private static final String AppKey = "your_appkey";
 
     private BuddyClient getClient() {
         return getClient(AppId, AppKey, true);
     }
 
     private BuddyClient getClient(String appid, String appkey, boolean syncMode) {
+
+        if (appid != null && appid.startsWith("your")) {
+
+            Assert.fail("Please specify an appid and appkey in the AppId and AppKey fields of test.com.buddy.sdk.BasicTest to run tests.");
+
+        }
 
         BuddyClientOptions options = new BuddyClientOptions();
         options.synchronousMode = syncMode;
@@ -127,6 +137,21 @@ public class BasicTest extends InstrumentationTestCase {
         assertNotNull(result);
         assertNull(result.getError());
         assertTrue(result.getResult());
+
+    }
+
+    public void testDelete() throws Exception {
+
+
+        BuddyClient client = getClient();
+
+
+        Future<BuddyResult<JsonObject>> handle = client.delete("/metrics/events/abc.123", null, JsonObject.class);
+        BuddyResult<JsonObject> result = handle.get();
+
+        assertNotNull(result);
+        assertEquals("ParameterIncorrectFormat", result.getError());
+
 
     }
 

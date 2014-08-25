@@ -60,36 +60,40 @@ class BuddyServiceClient {
     BuddyClientImpl _parent;
 
 
-    private class HttpPatch extends HttpEntityEnclosingRequestBase {
+    private class HttpMethodBase extends HttpEntityEnclosingRequestBase {
 
-        public final static String METHOD_NAME = "PATCH";
+        private String methodName;
 
-        public HttpPatch() {
-            super();
-        }
 
-        public HttpPatch(final URI uri) {
+        public HttpMethodBase(final URI uri, final String methodName) {
             super();
             setURI(uri);
-        }
-
-        public HttpPatch(final String uri) {
-            super();
-            setURI(URI.create(uri));
+            this.methodName = methodName;
         }
 
         @Override
         public String getMethod() {
-            return METHOD_NAME;
+            return methodName;
         }
 
     }
 
-    private class AsyncHttpClientWithPatch extends AsyncHttpClient {
+    private class AsyncHttpClientWithPatchAndDelete extends AsyncHttpClient {
 
         public RequestHandle patch(Context ctx, String url, Header[] headers, HttpEntity entity, String contentType, ResponseHandlerInterface responseHandler) {
 
-            HttpPatch patch = new HttpPatch(URI.create(url).normalize());
+            HttpMethodBase patch = new HttpMethodBase(URI.create(url).normalize(), PATCH);
+            if (entity != null) {
+                patch.setEntity(entity);
+            }
+
+            if (headers != null) patch.setHeaders(headers);
+            return sendRequest((DefaultHttpClient)getHttpClient(), getHttpContext(), patch, contentType, responseHandler, ctx);
+        }
+
+        public RequestHandle delete(Context ctx, String url, Header[] headers, HttpEntity entity, String contentType, ResponseHandlerInterface responseHandler) {
+
+            HttpMethodBase patch = new HttpMethodBase(URI.create(url).normalize(), DELETE);
             if (entity != null) {
                 patch.setEntity(entity);
             }
@@ -99,11 +103,22 @@ class BuddyServiceClient {
         }
     }
 
-    private class SyncHttpClientWithPatch extends SyncHttpClient {
+    private class SyncHttpClientWithPatchAndDelete extends SyncHttpClient {
 
         public RequestHandle patch(Context ctx, String url, Header[] headers, HttpEntity entity, String contentType, ResponseHandlerInterface responseHandler) {
 
-            HttpPatch patch = new HttpPatch(URI.create(url).normalize());
+            HttpMethodBase patch = new HttpMethodBase(URI.create(url).normalize(), PATCH);
+            if (entity != null) {
+                patch.setEntity(entity);
+            }
+
+            if (headers != null) patch.setHeaders(headers);
+            return sendRequest((DefaultHttpClient)getHttpClient(), getHttpContext(), patch, contentType, responseHandler, ctx);
+        }
+
+        public RequestHandle delete(Context ctx, String url, Header[] headers, HttpEntity entity, String contentType, ResponseHandlerInterface responseHandler) {
+
+            HttpMethodBase patch = new HttpMethodBase(URI.create(url).normalize(), DELETE);
             if (entity != null) {
                 patch.setEntity(entity);
             }
@@ -141,10 +156,10 @@ class BuddyServiceClient {
 
         if (client == null || (client instanceof SyncHttpClient) != isSyncMode) {
             if (isSyncMode) {
-                client = new SyncHttpClientWithPatch();
+                client = new SyncHttpClientWithPatchAndDelete();
             }
             else {
-                client = new AsyncHttpClientWithPatch();
+                client = new AsyncHttpClientWithPatchAndDelete();
             }
         }
         return client;
