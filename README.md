@@ -43,7 +43,7 @@ Go to File > Project Structure and select the Project tab. Change the `Default L
 This will install the latest release of the Buddy Android SDK.
 **Note:** If you wish to limit yourself to a narrower set of releases, you can do so like this (e.g. the latest release in the 3.0.0 series):
 
-    Compile 'com.buddy:androidsdk:3.0.0+'
+    compile 'com.buddy:androidsdk:3.0.0+'
 
 At this point you will be able to import from com.buddy.sdk to access the Buddy Classes
 (e.g. import com.buddy.sdk.BuddyClient)
