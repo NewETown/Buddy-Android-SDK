@@ -29,11 +29,12 @@ Full documentation for Buddy's services are available at [buddyplatform.com/docs
 
 ### Install from Maven/Gradle
 
+**Note:** The following instructions were written for Google's [Android Studio]
 In your build.gradle file under 'src', add a line for the Buddy Android SDK dependency
 
     dependencies {
-        Compile fileTree(dir: 'libs', include: ['*.jar'])
-        Compile 'com.buddy:androidsdk:+'
+        compile fileTree(dir: 'libs', include: ['*.jar'])
+        compile 'com.buddy:androidsdk:+'
     }
 
 Go to File > Project Structure and select the Project tab. Change the `Default Library Repository` from `jcenter()` to `mavenCentral`.
