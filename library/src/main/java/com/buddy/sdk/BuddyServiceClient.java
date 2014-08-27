@@ -1,6 +1,7 @@
 package com.buddy.sdk;
 
 import android.content.Context;
+import android.location.Location;
 import android.os.Looper;
 import android.util.Log;
 
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import com.buddy.sdk.models.LocationRange;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.loopj.android.http.AsyncHttpClient;
@@ -139,10 +141,10 @@ class BuddyServiceClient {
     }
 
     public void setSynchronousMode(boolean value) {
-       if (value != syncMode) {
-           client = null;
-           syncMode = value;
-       }
+        if (value != syncMode) {
+            client = null;
+            syncMode = value;
+        }
 
     }
 
@@ -157,8 +159,7 @@ class BuddyServiceClient {
         if (client == null || (client instanceof SyncHttpClient) != isSyncMode) {
             if (isSyncMode) {
                 client = new SyncHttpClientWithPatchAndDelete();
-            }
-            else {
+            } else {
                 client = new AsyncHttpClientWithPatchAndDelete();
             }
         }
@@ -167,40 +168,34 @@ class BuddyServiceClient {
 
     public static String toHexString(byte[] ba) {
         StringBuilder str = new StringBuilder();
-        for(int i = 0; i < ba.length; i++)
+        for (int i = 0; i < ba.length; i++)
             str.append(String.format("%02x", ba[i]));
         return str.toString();
     }
 
 
-    public String signString(String stringToSign,String secret) {
+    public String signString(String stringToSign, String secret) {
         try {
             Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
             SecretKeySpec secret_key = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
             sha256_HMAC.init(secret_key);
 
             return toHexString(sha256_HMAC.doFinal(stringToSign.getBytes()));
-        }
-        catch(NoSuchAlgorithmException e)
-        {
+        } catch (NoSuchAlgorithmException e) {
             return null;
-        }
-        catch(java.security.InvalidKeyException keyE)
-        {
+        } catch (java.security.InvalidKeyException keyE) {
             return null;
         }
     }
 
-    private String signRequest(String verb, String Path, String AppId, String Secret)
-    {
+    private String signRequest(String verb, String Path, String AppId, String Secret) {
         String fullPath = Path;
-        if(!Path.startsWith("/"))
-        {
-            fullPath = String.format("/%s",Path);
+        if (!Path.startsWith("/")) {
+            fullPath = String.format("/%s", Path);
         }
 
-        String stringToSign = String.format("%s\n%s\n%s",verb.toUpperCase(Locale.US),AppId,fullPath);
-        return signString(stringToSign,Secret);
+        String stringToSign = String.format("%s\n%s\n%s", verb.toUpperCase(Locale.US), AppId, fullPath);
+        return signString(stringToSign, Secret);
     }
 
     private static <T> BuddyResult<T> parseBuddyResponse(Class<T> type, int statusCode, String response) {
@@ -217,6 +212,12 @@ class BuddyServiceClient {
         return new BuddyResult<T>(result);
     }
 
+    private static Gson makeRequestSerializer() {
+        return new GsonBuilder()
+                .registerTypeAdapter(Location.class,new BuddyLocationSerializer())
+                .registerTypeAdapter(LocationRange.class,new BuddyLocationRangeSerializer())
+                .create();
+    }
 
 
     private static boolean isFile(Object obj) {
@@ -425,7 +426,7 @@ class BuddyServiceClient {
                         nonFiles.put(cursor.getKey(), obj);
                     }
                 }
-                String bodyJson = new Gson().toJson(nonFiles);
+                String bodyJson = BuddyServiceClient.makeRequestSerializer().toJson(nonFiles);
                 Log.d("BuddySdk", String.format("%s %s \r\n -> %s", verb, url, bodyJson));
                 if (files.size() > 0) {
                     InputStream stream = new ByteArrayInputStream(bodyJson.getBytes());

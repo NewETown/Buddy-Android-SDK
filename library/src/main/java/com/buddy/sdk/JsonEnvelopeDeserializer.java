@@ -18,7 +18,7 @@ import java.util.Date;
 /**
  * Created by shawn on 7/6/14.
  */
-class JsonEnvelopeDeserializer<T> implements JsonDeserializer<JsonEnvelope<Object>>
+public class JsonEnvelopeDeserializer<T> implements JsonDeserializer<JsonEnvelope<Object>>
 {
     private Class clazz;
 
@@ -26,11 +26,14 @@ class JsonEnvelopeDeserializer<T> implements JsonDeserializer<JsonEnvelope<Objec
 
     public JsonEnvelopeDeserializer(Class<T> clazz) {
         this.clazz = clazz;
-        gson =
-                new GsonBuilder()
-                        .registerTypeAdapter(Location.class, new BuddyLocationDeserializer())
-                        .registerTypeAdapter(Date.class, new BuddyDateDeserializer())
-                        .create();
+        gson = JsonEnvelopeDeserializer.makeGsonDeserializer();
+    }
+
+    public static Gson makeGsonDeserializer(){
+        return new GsonBuilder()
+                .registerTypeAdapter(Location.class, new BuddyLocationDeserializer())
+                .registerTypeAdapter(Date.class, new BuddyDateDeserializer())
+                .create();
     }
 
     @Override
