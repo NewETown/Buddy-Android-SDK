@@ -29,7 +29,7 @@ Full documentation for Buddy's services are available at [buddyplatform.com/docs
 
 ### Install from Maven/Gradle
 
-**Note:** The following instructions were written for Google's [Android Studio]
+**Note:** The following instructions were written for Google's [Android Studio](https://developer.android.com/sdk/installing/studio.html)
 In your build.gradle file under 'src', add a line for the Buddy Android SDK dependency
 
     dependencies {
