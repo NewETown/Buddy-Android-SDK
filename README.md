@@ -183,7 +183,7 @@ Each remaining REST verb is available through the Buddy SDK using the same patte
 
 ### Working With Files
 
-Buddy offers support for binary files. The .NET SDK works with files through our REST interface similarly to other API calls.
+Buddy offers support for binary files. The Android SDK works with files through our REST interface similarly to other API calls.
 
 **Note:** Responses for files deviate from the standard Buddy response templates. See the [Buddy Platform documentation](https://buddyplatform.com/docs) for more information.
 
