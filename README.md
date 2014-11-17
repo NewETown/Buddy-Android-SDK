@@ -137,7 +137,7 @@ Each SDK provides general wrappers that make REST calls to Buddy. For all the ca
 
 #### POST
 
-In this example we will create a checkin. Take a look at the [Create Checkin documentation](https://buddyplatform.com/docs/Create%20Checkin/HTTP), then:
+In this example we'll create a checkin. Take a look at the [create checkin REST documentation](https://buddyplatform.com/docs/Checkins#CreateCheckin) then:
 
     // Create a checkin
     Location location = new Location("");
