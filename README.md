@@ -160,7 +160,7 @@ In this example we will create a checkin. Take a look at the [Create Checkin doc
 
 #### GET
 
-This sample searches for the checkin we created in the POST example. See [Search Checkins](https://buddyplatform.com/docs/Search%20Checkins) for a full list of parameters.
+We now can call GET to [search for the checkin](https://buddyplatform.com/docs/Checkins#SearchCheckins) we just created!
 
     // Search for the checkin we created in the previous example
     Map<String, Object> parameters = new HashMap<String, Object>();
@@ -183,11 +183,13 @@ Each remaining REST verb is available through the Buddy SDK using the same patte
 
 ### Working With Files
 
-Buddy offers support for binary files. The Android SDK works with files through our REST interface similarly to other API calls.
+Buddy offers support for binary files. The .NET SDK works with files through our REST interface similarly to other API calls.
+
+**Note:** Responses for files deviate from the standard Buddy response templates. See the [Buddy Platform documentation](https://buddyplatform.com/docs) for more information.
 
 #### Upload A File
 
-The Buddy Android SDK handles all necessary file management for you. The key class is `com.buddy.sdk.BuddyFile`, which is a wrapper around an Android `File` or `InputStream`, along with a MIME content type. Here we demonstrate uploading a picture. All binary files use the same pattern with a different path and different parameters. To upload a picture POST to
+Here we demonstrate uploading a picture. For all binary files (e.g. blobs and videos), the pattern is the same, but with a different path and different parameters. For full documentation see our [Media and Files](https://buddyplatform.com/docs/Media%20and%20Files) documentation page.
 
     BuddyFile buddyFile = new BuddyFile(new File(...), "image/jpg");
     Map<String,Object> parameters = new HashMap<String,Object>();
