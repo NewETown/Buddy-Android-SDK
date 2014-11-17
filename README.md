@@ -64,7 +64,7 @@ To build the SDK you need to:
 1.  Clone this repository to your local machine
 2.  From the root of this repository, run `./gradlew build` (Mac/Linux) or `gradlew.bat build` (Windows) to build the SDK
 3.  Look in the **library/build/libs** folder to find the JARs.
-4.  Add the buddy-sdk-_version_.jar file as a dependency for your Android application.
+4.  Copy the JAR files and paste them into your app/libs folder
 
 
 **Note:** You will have to add the following dependencies to the `dependencies { ... }` block of your application's build.gradle file:
@@ -76,6 +76,8 @@ To build the SDK you need to:
         compile fileTree(dir: 'libs', include: ['*.jar'])
         compile files('libs/buddy-sdk-0.2.0.jar')
     }
+
+You are now able to use the Buddy Android SDK in your application.
 
 ## Using the Android SDK
 

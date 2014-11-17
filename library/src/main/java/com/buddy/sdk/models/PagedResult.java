@@ -15,6 +15,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
 
 
 /**
@@ -28,17 +29,15 @@ public class PagedResult {
     public String currentToken;
     public List<JsonObject> pageResults;
 
-    public <T extends ModelBase> List<T> ConvertPageResults(Type typeOfT) {
-
+    public <T extends ModelBase> List<T> convertPageResults(Class<T> clazz) {
         List<T> result = new ArrayList<T>();
 
-        if(typeOfT==null) {
-            return result; // Or throw ?
-        }
         Gson gson = JsonEnvelopeDeserializer.makeGsonDeserializer();
 
+        Type ty =  TypeToken.get(clazz).getType();
+
         for(JsonObject jObj : pageResults){
-            T currentObj = gson.fromJson(jObj,typeOfT);
+            T currentObj = gson.fromJson(jObj,ty);
             currentObj.setJsonObject(jObj);
             result.add(currentObj);
         }

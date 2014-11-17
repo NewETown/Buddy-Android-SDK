@@ -15,8 +15,13 @@ public class BuddyResultBase {
     	
         return env.error;
     }
+
+    public String getErrorMessage() {
+        return env.message;
+    }
     
     public int getErrorCode() {
+
         return env.errorCode;
     }
 

@@ -325,7 +325,7 @@ public class BasicTest extends InstrumentationTestCase {
 
         PagedResult searchResults = handle5.get().getResult();
         assertTrue(searchResults.pageResults.size()>0);
-        List<Checkin> checkins = searchResults.ConvertPageResults(Checkin.class);
+        List<Checkin> checkins = searchResults.convertPageResults(Checkin.class);
 
         for(Checkin checkin : checkins) {
             assertTrue(checkin.description.startsWith("description1"));

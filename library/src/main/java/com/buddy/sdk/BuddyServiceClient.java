@@ -216,6 +216,7 @@ class BuddyServiceClient {
         return new GsonBuilder()
                 .registerTypeAdapter(Location.class,new BuddyLocationSerializer())
                 .registerTypeAdapter(LocationRange.class,new BuddyLocationRangeSerializer())
+                .registerTypeAdapter(DateRange.class, new DateRangeSerializer())
                 .create();
     }
 
@@ -257,6 +258,16 @@ class BuddyServiceClient {
     private void logResult(JSONObject result) {
         String json = result.toString();
         Log.d("BuddySdk", json);
+    }
+
+    private Object convertParameter(Object val) {
+        if (val instanceof DateRange) {
+            return DateRangeSerializer.serializeCore((DateRange)val);
+        }
+        else if (val instanceof LocationRange) {
+            return BuddyLocationRangeSerializer.serializeCore((LocationRange)val);
+        }
+        return val;
     }
 
 
@@ -362,7 +373,7 @@ class BuddyServiceClient {
 
             if (parameters != null) {
                 for (Map.Entry<String, Object> cursor : parameters.entrySet()) {
-                    requestParams.put(cursor.getKey(), cursor.getValue());
+                    requestParams.put(cursor.getKey(), convertParameter(cursor.getValue()));
                 }
             }
             ResponseHandlerInterface handler = jsonHandler;
@@ -385,7 +396,7 @@ class BuddyServiceClient {
                         }
 
                         BuddyFile file = new BuddyFile(result, contentTypeHeader);
-                        JsonEnvelope env = new JsonEnvelope();
+                        JsonEnvelope env = new JsonEnvelope<T>();
                         env.result = file;
 
                         BuddyResult<T> r = new BuddyResult<T>(env);
@@ -609,7 +620,7 @@ class BuddyServiceClient {
 
                         if(fullAccessToken!=null && _parent.getSharedSecret()!=null)
                         {
-                            String requestSig = signRequest(verb,path,_parent.getApp_id(),_parent.getSharedSecret());
+                            String requestSig = signRequest(verb,path,_parent.getAppId(),_parent.getSharedSecret());
                             if(requestSig!=null) {
                                 fullAccessToken = String.format("%s %s", fullAccessToken, requestSig);
                             }

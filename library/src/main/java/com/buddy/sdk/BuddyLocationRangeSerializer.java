@@ -16,10 +16,14 @@ import java.util.Locale;
  * Created by nick on 8/26/14.
  */
 public class BuddyLocationRangeSerializer implements JsonSerializer<LocationRange>{
-    @Override public JsonElement serialize(final LocationRange locationRange, final Type typeOfSrc, final JsonSerializationContext context) {
-        final JsonObject jsonObject = new JsonObject();
 
-        String locString = String.format(Locale.US,"%s,%s,%s",locationRange.getLatitude(),locationRange.getLongitude(),locationRange.distance);
+	public static String serializeCore(LocationRange locationRange) {
+		return String.format(Locale.US,"%s,%s,%s",locationRange.getLatitude(),locationRange.getLongitude(),locationRange.distance);
+	}
+
+    @Override public JsonElement serialize(final LocationRange locationRange, final Type typeOfSrc, final JsonSerializationContext context) {
+        
+        String locString = serializeCore(locationRange);
 
         JsonElement result = new JsonPrimitive(locString);
         return result;

@@ -10,7 +10,7 @@ import java.util.Observable;
 /**
  * Created by nick on 8/25/14.
  */
-public class Message {
+public class Message extends ModelBase {
     public enum MessageType {
         Sent,
         Received

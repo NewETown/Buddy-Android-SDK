@@ -20,7 +20,7 @@ import java.util.Date;
  */
 public class JsonEnvelopeDeserializer<T> implements JsonDeserializer<JsonEnvelope<Object>>
 {
-    private Class clazz;
+    private Class<T> clazz;
 
     private Gson gson;
 
@@ -44,37 +44,33 @@ public class JsonEnvelopeDeserializer<T> implements JsonDeserializer<JsonEnvelop
 
         JsonElement element = jsonObj.get("result");
 
-        if (element.isJsonObject()) {
+        if (element != null) {
+            if (element.isJsonObject()) {
 
-            if (clazz != null && !JsonObject.class.isAssignableFrom(clazz)) {
-                result = gson.fromJson(element.getAsJsonObject(), clazz);
-            }
-            else {
-                result = element.getAsJsonObject();
+                if (clazz != null && !JsonObject.class.isAssignableFrom(clazz)) {
+                    result = gson.fromJson(element.getAsJsonObject(), clazz);
+                } else {
+                    result = element.getAsJsonObject();
+                }
+
+                if (result instanceof ModelBase) {
+                    ((ModelBase) result).setJsonObject(element.getAsJsonObject());
+                }
+            } else if (element.isJsonPrimitive()) {
+                JsonPrimitive primitive = element.getAsJsonPrimitive();
+
+                if (primitive.isString()) {
+                    result = primitive.getAsString();
+                } else if (primitive.isBoolean()) {
+                    result = primitive.getAsBoolean();
+                } else if (primitive.isNumber()) {
+                    result = primitive.getAsLong();
+                }
+            } else {
+                throw new JsonParseException("Can't deal with JSON: " + element.toString());
             }
 
-            if (result instanceof ModelBase) {
-                ((ModelBase)result).setJsonObject(element.getAsJsonObject());
-            }
         }
-        else if (element.isJsonPrimitive()) {
-            JsonPrimitive primitive = element.getAsJsonPrimitive();
-
-            if (primitive.isString()) {
-                result = primitive.getAsString();
-            }
-            else if (primitive.isBoolean()) {
-                result = primitive.getAsBoolean();
-            }
-            else if (primitive.isNumber()) {
-                result = primitive.getAsLong();
-            }
-        }
-        else {
-            throw new JsonParseException("Can't deal with JSON: " + element.toString());
-        }
-
-
 
         JsonEnvelope<Object> env = new JsonEnvelope<Object>(jsonObj, result);
 

@@ -4,10 +4,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 
+import com.buddy.sdk.models.NotificationResult;
 import com.buddy.sdk.models.TimedMetric;
 import com.buddy.sdk.models.User;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.concurrent.Future;
@@ -25,7 +27,7 @@ public class Buddy {
 
     private static Map<String, BuddyClient> _clients = new HashMap<String, BuddyClient>();
 
-    private static String GetClientKey(String appId, BuddyClientOptions options)
+    private static String getClientKey(String appId, BuddyClientOptions options)
     {
         return appId + options.instanceName;
     }
@@ -44,7 +46,7 @@ public class Buddy {
 
         BuddyClient client = null;
 
-        String key = GetClientKey(appId, options);
+        String key = getClientKey(appId, options);
 
         if(_clients.containsKey(key))
         {
@@ -145,6 +147,11 @@ public class Buddy {
         return getCurrentClient().loginUser(username, password, callback);
     }
 
+      public static Future<BuddyResult<User>> socialLogin(String identityProviderName, String identityId, String identityAccessToken, final BuddyCallback<User> callback)
+    {
+        return getCurrentClient().socialLogin(identityProviderName, identityId, identityAccessToken, callback);
+    }
+
     public static Future<BuddyResult<Boolean>> logoutUser(final BuddyCallback<Boolean> callback)
     {
         return getCurrentClient().logoutUser(callback);
@@ -159,6 +166,18 @@ public class Buddy {
     public static Future<BuddyResult<Boolean>> setPushToken(String pushToken, final BuddyCallback<Boolean> callback)
     {
         return getCurrentClient().setPushToken(pushToken, callback);
+    }
+
+    public static Future<BuddyResult<NotificationResult>> sendPushNotification(List<String> recipientIds, String title, String message, String payload) {
+        return getCurrentClient().sendPushNotification(recipientIds, title, message, payload);
+    }
+
+    public static Future<BuddyResult<NotificationResult>> sendPushNotification(List<String> recipientIds, String title, String message, String payload, int counterValue) {
+         return getCurrentClient().sendPushNotification(recipientIds, title, message, payload, counterValue);
+    }
+
+    public static Future<BuddyResult<NotificationResult>> sendPushNotification(List<String> recipientIds, Map<String,Object> osCustomData){
+        return getCurrentClient().sendPushNotification(recipientIds, osCustomData);
     }
 
     public static void recordNotificationReceived(Intent message)
