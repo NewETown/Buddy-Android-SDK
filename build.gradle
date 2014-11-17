@@ -19,7 +19,7 @@ def isReleaseBuild() {
 
 allprojects {
     group = 'com.buddy.sdk'
-    version = '0.2.0'
+    version = '3.0.3'
 
     repositories {
         mavenCentral()

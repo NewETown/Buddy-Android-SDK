@@ -21,7 +21,7 @@ class BuddyFuture<V> implements Future<V> {
 
     private class CallbackWrapper {
         public BuddyFutureCallback callback;
-        public BuddyFuture handle;
+        public BuddyFuture<V> handle;
     }
 
     private List<CallbackWrapper> callbacks;
@@ -30,7 +30,7 @@ class BuddyFuture<V> implements Future<V> {
 
     }
 
-    public BuddyFuture<V> continueWith(final BuddyFutureCallback callback) {
+    public BuddyFuture<V> continueWith(final BuddyFutureCallback<V> callback) {
 
         if (!done) {
             if (callbacks == null) {

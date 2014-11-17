@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 
+import com.buddy.sdk.models.NotificationResult;
 import com.buddy.sdk.models.TimedMetric;
 import com.buddy.sdk.models.User;
 import com.google.gson.Gson;
@@ -19,6 +20,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -147,7 +149,7 @@ class BuddyClientImpl implements BuddyClient {
         }
     }
 
-    public String getApp_id() {
+    public String getAppId() {
         return app_id;
     }
 
@@ -358,6 +360,15 @@ class BuddyClientImpl implements BuddyClient {
         return this.post("/users/login", parameters, getUserCallback(callback));
     }
 
+    public Future<BuddyResult<User>> socialLogin(String identityProviderId, String identityId, String identityAccessToken, final BuddyCallback<User> callback) {
+        Map<String, Object> parameters = new HashMap<String, Object>();
+        parameters.put("identityProviderId", identityProviderId);
+        parameters.put("identityId", identityId);
+        parameters.put("identityAccessToken",identityAccessToken);
+
+        return this.post("/users/login/social", parameters, getUserCallback(callback));
+    }
+
     public Future<BuddyResult<Boolean>> logoutUser(final BuddyCallback<Boolean> callback) {
         Map<String, Object> parameters = new HashMap<String, Object>();
 
@@ -453,23 +464,44 @@ class BuddyClientImpl implements BuddyClient {
     //
     // Push Notification Stuff
     //
-    public Future<BuddyResult<Boolean>> setPushToken(String pushToken, final BuddyCallback<Boolean> callback) {
+    public Future<BuddyResult<Boolean>> setPushToken(final String pushToken, final BuddyCallback<Boolean> callback) {
+
+
+        final BuddyClientSettings settings = getSettings();
+        
+        if (pushToken != null && pushToken.equals(settings.pushToken)) {
+            // nothing to do.
+            BuddyFuture<BuddyResult<Boolean>> ret = new BuddyFuture<BuddyResult<Boolean>>();
+            JsonEnvelope<Boolean> env = new JsonEnvelope<Boolean>();
+            env.result = false;
+            BuddyResult<Boolean> br = new BuddyResult<Boolean>(env);
+            ret.setValue(br);
+
+            if (callback != null) {
+                callback.completed(br);
+            }
+            return ret;
+        }            
 
         Map<String, Object> parameters = new HashMap<String, Object>();
         if (pushToken != null) {
             parameters.put("pushToken", pushToken);
         }
 
-        BuddyClientSettings settings = getSettings();
-        settings.pushToken = pushToken;
-        saveSettings();
-
+       
         final BuddyFuture<BuddyResult<Boolean>> promise = new BuddyFuture<BuddyResult<Boolean>>();
 
 
         BuddyFuture<BuddyResult<Object>> handle = (BuddyFuture<BuddyResult<Object>>) this.patch("/devices/current", parameters, new BuddyCallback<Object>(Object.class) {
             @Override
             public void completed(BuddyResult<Object> result) {
+
+                if (result.getIsSuccess()) {
+                    // save the settings
+                    settings.pushToken = pushToken;
+                    saveSettings();
+                }
+
                 if (callback != null) {
                     callback.completed(result.<Boolean>convert(result.getIsSuccess()));
                 }
@@ -493,6 +525,36 @@ class BuddyClientImpl implements BuddyClient {
 
         return promise;
     }
+
+
+    public Future<BuddyResult<NotificationResult>> sendPushNotification(List<String> recipientIds, String title, String message, String payload) {
+        return sendPushNotification(recipientIds, title, message, payload, -1);
+    }
+
+    public Future<BuddyResult<NotificationResult>> sendPushNotification(List<String> recipientIds, String title, String message, String payload, int counterValue) {
+        final Map<String,Object> params = new HashMap<String, Object>();
+
+        params.put("recipients", recipientIds);
+        if (title != null) {
+            params.put("title", title);
+        }
+
+        if (message != null) {
+            params.put("message", message);
+        }
+
+        if (payload != null) {
+            params.put("payload", payload);
+        }
+
+        if (counterValue >= 0) {
+            params.put("counterValue", counterValue);
+        }
+
+        // send the notification
+        return Buddy.post("/notifications", params, NotificationResult.class);
+    }
+
 
 
     public void recordNotificationReceived(Intent message) {

@@ -29,19 +29,21 @@ Full documentation for Buddy's services are available at [buddyplatform.com/docs
 
 ### Install from Maven/Gradle
 
+**Note:** The following instructions were written for Google's [Android Studio](https://developer.android.com/sdk/installing/studio.html)
+
 In your build.gradle file under 'src', add a line for the Buddy Android SDK dependency
 
     dependencies {
-        Compile fileTree(dir: 'libs', include: ['*.jar'])
-        Compile 'com.buddy:androidsdk:+'
+        compile fileTree(dir: 'libs', include: ['*.jar'])
+        compile 'com.buddy:androidsdk:+'
     }
 
 Go to File > Project Structure and select the Project tab. Change the `Default Library Repository` from `jcenter()` to `mavenCentral`.
 
 This will install the latest release of the Buddy Android SDK.
-**Note:** If you wish to limit yourself to a narrower set of releases, you can do so like this (e.g. the latest release in the 0.1 series):
+**Note:** If you wish to limit yourself to a narrower set of releases, you can do so like this (e.g. the latest release in the 3.0.0 series):
 
-    Compile 'com.buddy:androidsdk:0.1.+'
+    compile 'com.buddy:androidsdk:3.0.+'
 
 At this point you will be able to import from com.buddy.sdk to access the Buddy Classes
 (e.g. import com.buddy.sdk.BuddyClient)
@@ -62,7 +64,7 @@ To build the SDK you need to:
 1.  Clone this repository to your local machine
 2.  From the root of this repository, run `./gradlew build` (Mac/Linux) or `gradlew.bat build` (Windows) to build the SDK
 3.  Look in the **library/build/libs** folder to find the JARs.
-4.  Add the buddy-sdk-_version_.jar file as a dependency for your Android application.
+4.  Copy the JAR files and paste them into your app/libs folder
 
 
 **Note:** You will have to add the following dependencies to the `dependencies { ... }` block of your application's build.gradle file:
@@ -72,8 +74,9 @@ To build the SDK you need to:
         compile 'com.loopj.android:android-async-http:1.4.5'
         compile 'com.google.code.gson:gson:2.2.+'
         compile fileTree(dir: 'libs', include: ['*.jar'])
-        compile files('libs/buddy-sdk-0.2.0.jar')
     }
+
+You are now able to use the Buddy Android SDK in your application.
 
 ## Using the Android SDK
 
@@ -211,45 +214,6 @@ To download a file send a GET request with BPFile as the operation type. This sa
     });
 
 **Note:** Responses for files deviate from the standard Buddy response templates. See the [Buddy Platform documentation](https://buddyplatform.com/docs) for more information.
-  
-### Creating Response Objects
-
-Creating strongly typed response objects is simple.  If the REST operation that you intend to call returns a response that's not available in `com.buddy.sdk.models`, you can easily create one by creating a Java object with fields that match the JSON response fields for the operation.
-
-1.  Go to the Buddy Console and try your operation
-2.  When the operation completes, note the fields and their types in the response
-3.  Create a Java class that derives from `com.buddy.sdk.models.ModelBase` with the appropriate properties.
-
-For example, the response to **POST /checkins** looks like:
-
-     {
-       "status": 201,
-       "result": {
-         "comment": "h1",
-         "userID": "bv.HrcbbDkMPgfn",
-         "id": "cb.gBgbvKFkdhnp",
-         "location": {
-           "lat": 46.2,
-           "lng": -120.1
-          },
-         "created": "2014-07-09T07:07:21.463Z",
-         "lastModified": "2014-07-09T07:07:21.463Z"
-     },
-     "request_id": "53bcea29b32fad0c405372b6",
-     "success": true
-    }
-
-The corresponding Java object for the unique field under `result` is:
-
-    public class Checkin extends ModelBase {
-        public String comment;
-    }
-    
-**Note:** we do not need to specify the default common properties `id`, `userID`, `location`, `created`, or `lastModified`.
-
-We can then call:
-
-     Buddy.<BuddyResult<Checkin>>get(String.format("/checkins/%f", checkinId), null, new BuddyCallback<Checkin>(Checkin.class){...});
 
 ## Contributing Back: Pull Requests
 

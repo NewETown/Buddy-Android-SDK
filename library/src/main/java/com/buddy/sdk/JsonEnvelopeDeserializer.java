@@ -18,19 +18,22 @@ import java.util.Date;
 /**
  * Created by shawn on 7/6/14.
  */
-class JsonEnvelopeDeserializer<T> implements JsonDeserializer<JsonEnvelope<Object>>
+public class JsonEnvelopeDeserializer<T> implements JsonDeserializer<JsonEnvelope<Object>>
 {
-    private Class clazz;
+    private Class<T> clazz;
 
     private Gson gson;
 
     public JsonEnvelopeDeserializer(Class<T> clazz) {
         this.clazz = clazz;
-        gson =
-                new GsonBuilder()
-                        .registerTypeAdapter(Location.class, new BuddyLocationDeserializer())
-                        .registerTypeAdapter(Date.class, new BuddyDateDeserializer())
-                        .create();
+        gson = JsonEnvelopeDeserializer.makeGsonDeserializer();
+    }
+
+    public static Gson makeGsonDeserializer(){
+        return new GsonBuilder()
+                .registerTypeAdapter(Location.class, new BuddyLocationDeserializer())
+                .registerTypeAdapter(Date.class, new BuddyDateDeserializer())
+                .create();
     }
 
     @Override
@@ -41,37 +44,33 @@ class JsonEnvelopeDeserializer<T> implements JsonDeserializer<JsonEnvelope<Objec
 
         JsonElement element = jsonObj.get("result");
 
-        if (element.isJsonObject()) {
+        if (element != null) {
+            if (element.isJsonObject()) {
 
-            if (clazz != null && !JsonObject.class.isAssignableFrom(clazz)) {
-                result = gson.fromJson(element.getAsJsonObject(), clazz);
-            }
-            else {
-                result = element.getAsJsonObject();
+                if (clazz != null && !JsonObject.class.isAssignableFrom(clazz)) {
+                    result = gson.fromJson(element.getAsJsonObject(), clazz);
+                } else {
+                    result = element.getAsJsonObject();
+                }
+
+                if (result instanceof ModelBase) {
+                    ((ModelBase) result).setJsonObject(element.getAsJsonObject());
+                }
+            } else if (element.isJsonPrimitive()) {
+                JsonPrimitive primitive = element.getAsJsonPrimitive();
+
+                if (primitive.isString()) {
+                    result = primitive.getAsString();
+                } else if (primitive.isBoolean()) {
+                    result = primitive.getAsBoolean();
+                } else if (primitive.isNumber()) {
+                    result = primitive.getAsLong();
+                }
+            } else {
+                throw new JsonParseException("Can't deal with JSON: " + element.toString());
             }
 
-            if (result instanceof ModelBase) {
-                ((ModelBase)result).setJsonObject(element.getAsJsonObject());
-            }
         }
-        else if (element.isJsonPrimitive()) {
-            JsonPrimitive primitive = element.getAsJsonPrimitive();
-
-            if (primitive.isString()) {
-                result = primitive.getAsString();
-            }
-            else if (primitive.isBoolean()) {
-                result = primitive.getAsBoolean();
-            }
-            else if (primitive.isNumber()) {
-                result = primitive.getAsLong();
-            }
-        }
-        else {
-            throw new JsonParseException("Can't deal with JSON: " + element.toString());
-        }
-
-
 
         JsonEnvelope<Object> env = new JsonEnvelope<Object>(jsonObj, result);
 

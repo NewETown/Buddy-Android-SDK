@@ -1,6 +1,7 @@
 package com.buddy.sdk;
 
 import android.content.Context;
+import android.location.Location;
 import android.os.Looper;
 import android.util.Log;
 
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import com.buddy.sdk.models.LocationRange;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.loopj.android.http.AsyncHttpClient;
@@ -60,36 +62,40 @@ class BuddyServiceClient {
     BuddyClientImpl _parent;
 
 
-    private class HttpPatch extends HttpEntityEnclosingRequestBase {
+    private class HttpMethodBase extends HttpEntityEnclosingRequestBase {
 
-        public final static String METHOD_NAME = "PATCH";
+        private String methodName;
 
-        public HttpPatch() {
-            super();
-        }
 
-        public HttpPatch(final URI uri) {
+        public HttpMethodBase(final URI uri, final String methodName) {
             super();
             setURI(uri);
-        }
-
-        public HttpPatch(final String uri) {
-            super();
-            setURI(URI.create(uri));
+            this.methodName = methodName;
         }
 
         @Override
         public String getMethod() {
-            return METHOD_NAME;
+            return methodName;
         }
 
     }
 
-    private class AsyncHttpClientWithPatch extends AsyncHttpClient {
+    private class AsyncHttpClientWithPatchAndDelete extends AsyncHttpClient {
 
         public RequestHandle patch(Context ctx, String url, Header[] headers, HttpEntity entity, String contentType, ResponseHandlerInterface responseHandler) {
 
-            HttpPatch patch = new HttpPatch(URI.create(url).normalize());
+            HttpMethodBase patch = new HttpMethodBase(URI.create(url).normalize(), PATCH);
+            if (entity != null) {
+                patch.setEntity(entity);
+            }
+
+            if (headers != null) patch.setHeaders(headers);
+            return sendRequest((DefaultHttpClient)getHttpClient(), getHttpContext(), patch, contentType, responseHandler, ctx);
+        }
+
+        public RequestHandle delete(Context ctx, String url, Header[] headers, HttpEntity entity, String contentType, ResponseHandlerInterface responseHandler) {
+
+            HttpMethodBase patch = new HttpMethodBase(URI.create(url).normalize(), DELETE);
             if (entity != null) {
                 patch.setEntity(entity);
             }
@@ -99,11 +105,22 @@ class BuddyServiceClient {
         }
     }
 
-    private class SyncHttpClientWithPatch extends SyncHttpClient {
+    private class SyncHttpClientWithPatchAndDelete extends SyncHttpClient {
 
         public RequestHandle patch(Context ctx, String url, Header[] headers, HttpEntity entity, String contentType, ResponseHandlerInterface responseHandler) {
 
-            HttpPatch patch = new HttpPatch(URI.create(url).normalize());
+            HttpMethodBase patch = new HttpMethodBase(URI.create(url).normalize(), PATCH);
+            if (entity != null) {
+                patch.setEntity(entity);
+            }
+
+            if (headers != null) patch.setHeaders(headers);
+            return sendRequest((DefaultHttpClient)getHttpClient(), getHttpContext(), patch, contentType, responseHandler, ctx);
+        }
+
+        public RequestHandle delete(Context ctx, String url, Header[] headers, HttpEntity entity, String contentType, ResponseHandlerInterface responseHandler) {
+
+            HttpMethodBase patch = new HttpMethodBase(URI.create(url).normalize(), DELETE);
             if (entity != null) {
                 patch.setEntity(entity);
             }
@@ -124,10 +141,10 @@ class BuddyServiceClient {
     }
 
     public void setSynchronousMode(boolean value) {
-       if (value != syncMode) {
-           client = null;
-           syncMode = value;
-       }
+        if (value != syncMode) {
+            client = null;
+            syncMode = value;
+        }
 
     }
 
@@ -141,10 +158,9 @@ class BuddyServiceClient {
 
         if (client == null || (client instanceof SyncHttpClient) != isSyncMode) {
             if (isSyncMode) {
-                client = new SyncHttpClientWithPatch();
-            }
-            else {
-                client = new AsyncHttpClientWithPatch();
+                client = new SyncHttpClientWithPatchAndDelete();
+            } else {
+                client = new AsyncHttpClientWithPatchAndDelete();
             }
         }
         return client;
@@ -152,40 +168,34 @@ class BuddyServiceClient {
 
     public static String toHexString(byte[] ba) {
         StringBuilder str = new StringBuilder();
-        for(int i = 0; i < ba.length; i++)
+        for (int i = 0; i < ba.length; i++)
             str.append(String.format("%02x", ba[i]));
         return str.toString();
     }
 
 
-    public String signString(String stringToSign,String secret) {
+    public String signString(String stringToSign, String secret) {
         try {
             Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
             SecretKeySpec secret_key = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
             sha256_HMAC.init(secret_key);
 
             return toHexString(sha256_HMAC.doFinal(stringToSign.getBytes()));
-        }
-        catch(NoSuchAlgorithmException e)
-        {
+        } catch (NoSuchAlgorithmException e) {
             return null;
-        }
-        catch(java.security.InvalidKeyException keyE)
-        {
+        } catch (java.security.InvalidKeyException keyE) {
             return null;
         }
     }
 
-    private String signRequest(String verb, String Path, String AppId, String Secret)
-    {
+    private String signRequest(String verb, String Path, String AppId, String Secret) {
         String fullPath = Path;
-        if(!Path.startsWith("/"))
-        {
-            fullPath = String.format("/%s",Path);
+        if (!Path.startsWith("/")) {
+            fullPath = String.format("/%s", Path);
         }
 
-        String stringToSign = String.format("%s\n%s\n%s",verb.toUpperCase(Locale.US),AppId,fullPath);
-        return signString(stringToSign,Secret);
+        String stringToSign = String.format("%s\n%s\n%s", verb.toUpperCase(Locale.US), AppId, fullPath);
+        return signString(stringToSign, Secret);
     }
 
     private static <T> BuddyResult<T> parseBuddyResponse(Class<T> type, int statusCode, String response) {
@@ -202,6 +212,13 @@ class BuddyServiceClient {
         return new BuddyResult<T>(result);
     }
 
+    private static Gson makeRequestSerializer() {
+        return new GsonBuilder()
+                .registerTypeAdapter(Location.class,new BuddyLocationSerializer())
+                .registerTypeAdapter(LocationRange.class,new BuddyLocationRangeSerializer())
+                .registerTypeAdapter(DateRange.class, new DateRangeSerializer())
+                .create();
+    }
 
 
     private static boolean isFile(Object obj) {
@@ -241,6 +258,16 @@ class BuddyServiceClient {
     private void logResult(JSONObject result) {
         String json = result.toString();
         Log.d("BuddySdk", json);
+    }
+
+    private Object convertParameter(Object val) {
+        if (val instanceof DateRange) {
+            return DateRangeSerializer.serializeCore((DateRange)val);
+        }
+        else if (val instanceof LocationRange) {
+            return BuddyLocationRangeSerializer.serializeCore((LocationRange)val);
+        }
+        return val;
     }
 
 
@@ -346,7 +373,7 @@ class BuddyServiceClient {
 
             if (parameters != null) {
                 for (Map.Entry<String, Object> cursor : parameters.entrySet()) {
-                    requestParams.put(cursor.getKey(), cursor.getValue());
+                    requestParams.put(cursor.getKey(), convertParameter(cursor.getValue()));
                 }
             }
             ResponseHandlerInterface handler = jsonHandler;
@@ -369,7 +396,7 @@ class BuddyServiceClient {
                         }
 
                         BuddyFile file = new BuddyFile(result, contentTypeHeader);
-                        JsonEnvelope env = new JsonEnvelope();
+                        JsonEnvelope env = new JsonEnvelope<T>();
                         env.result = file;
 
                         BuddyResult<T> r = new BuddyResult<T>(env);
@@ -410,7 +437,7 @@ class BuddyServiceClient {
                         nonFiles.put(cursor.getKey(), obj);
                     }
                 }
-                String bodyJson = new Gson().toJson(nonFiles);
+                String bodyJson = BuddyServiceClient.makeRequestSerializer().toJson(nonFiles);
                 Log.d("BuddySdk", String.format("%s %s \r\n -> %s", verb, url, bodyJson));
                 if (files.size() > 0) {
                     InputStream stream = new ByteArrayInputStream(bodyJson.getBytes());
@@ -593,7 +620,7 @@ class BuddyServiceClient {
 
                         if(fullAccessToken!=null && _parent.getSharedSecret()!=null)
                         {
-                            String requestSig = signRequest(verb,path,_parent.getApp_id(),_parent.getSharedSecret());
+                            String requestSig = signRequest(verb,path,_parent.getAppId(),_parent.getSharedSecret());
                             if(requestSig!=null) {
                                 fullAccessToken = String.format("%s %s", fullAccessToken, requestSig);
                             }
